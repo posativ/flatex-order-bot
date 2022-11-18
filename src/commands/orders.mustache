@@ -1,0 +1,27 @@
+<p>
+    {{#orders}}
+        {{#isDeleted}}
+            ✗
+        {{/isDeleted}}
+        {{#isPending}}
+            &nbsp;&middot;&nbsp;
+        {{/isPending}}
+        {{#isExecuted}}
+            ✓
+        {{/isExecuted}}
+        <code><font color="{{#sell}}#cc4412{{/sell}}{{^sell}}#158c35{{/sell}}">{{orderId}}&shy;</font></code>
+        &middot;
+        <code><a href="{{onvistaUrl}}">{{paper.sin}}</a></code>
+        &middot;
+        <code>{{date}} {{time}}</code>
+        &middot;
+        {{stockExchangeName}}
+        &middot;
+        &times;{{value.value}}
+        &middot;
+        {{additionalArgs}}
+        &middot;
+        {{paper.name}}
+        <br>
+    {{/orders}}
+</p>

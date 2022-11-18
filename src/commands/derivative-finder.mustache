@@ -1,0 +1,29 @@
+<p>
+    {{#derivatives}}
+        {{#isRecent}}
+            <font color="#158c35">◉</font>
+        {{/isRecent}}
+        {{#isOkayish}}
+            <font color="#e3b839">◉</font>
+        {{/isOkayish}}
+        {{#isWarning}}
+            <font color="#cc4412">◉</font>
+        {{/isWarning}}
+        <code><a href="{{onvistaUrl}}">{{instrument.wkn}}</a></code>
+        &middot;
+        {{#gearingLastFormatted}}
+            <code>&times;{{gearingLastFormatted}}</code>
+        {{/gearingLastFormatted}}
+        &middot;
+        <code><font color="{{spreadColor}}">{{spreadFormatted}}</font></code>
+        &middot;
+        <code>{{shortName}}</code>
+        &middot;
+        <code>{{issuer.name}}</code>
+        {{#quote.ask}}
+            &middot;
+            <code>{{quote.ask}} {{quote.isoCurrency}}</code>
+        {{/quote.ask}}
+        <br>
+    {{/derivatives}}
+</p>

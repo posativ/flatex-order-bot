@@ -1,0 +1,13 @@
+<p>
+    {{#exchange}}
+        Provided exchange <code>{{exchange}}</code> not found in
+    {{/exchange}}
+    {{^exchange}}
+        {{sin}}: not preferred exchange found in
+    {{/exchange}}
+</p>
+<ul>
+    {{#exchangeInfoList}}
+        <li><code>{{exchange}}</code>: {{exchangeDescription}} [{{currency}}]</li>
+    {{/exchangeInfoList}}
+</ul>

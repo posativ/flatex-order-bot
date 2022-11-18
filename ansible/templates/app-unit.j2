@@ -1,0 +1,21 @@
+[Unit]
+Description=Flatex Bot
+
+[Service]
+WorkingDirectory=/data/flatex-bot
+ExecStart=/usr/bin/node dist/app.js
+Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
+RestartSec=10
+KillSignal=SIGINT
+User=flatex-bot
+Environment=FLATEX_BASE_URL={{ app_flatex_base_url }}
+Environment=FLATEX_PRINCIPAL={{ app_flatex_principal }}
+Environment=FLATEX_CREDENTIAL={{ app_flatex_credential }}
+Environment=ONVISTA_BASE_URL={{ app_onvista_base_url }}
+Environment=MATRIX_HOME_SERVER_URL={{ app_matrix_home_server }}
+Environment=MATRIX_ACCESS_TOKEN={{ app_matrix_access_token }}
+Environment=MATRIX_ROOM_ID={{ app_matrix_room_id }}
+
+[Install]
+WantedBy=multi-user.target

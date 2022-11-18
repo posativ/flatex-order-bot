@@ -1,0 +1,13 @@
+<p>
+{{#balance}}
+    {{#available.value}}
+        {{available.value}} {{available.currency}} available
+    {{/available.value}}
+    {{#booked.value}}
+        &middot; {{booked.value}} {{booked.currency}} booked
+    {{/booked.value}}
+    {{#creditLine.value}}
+        &middot; {{creditLine.value}} {{creditLine.currency}} credit line
+    {{/creditLine.value}}
+{{/balance}}
+</p>

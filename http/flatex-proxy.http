@@ -1,0 +1,461 @@
+### Login to Flatex (PIN is actually SHA256 of the password string)
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processLogon",
+  "args": {
+    "principal": "{{flatex_username}}",
+    "credential": {
+      "credentialName": "PIN",
+      "credential": "{{flatex_password}}"
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+> {%
+client.test("Extract session id", () => {
+  client.global.set("flatex_session_id", response.body["sessionId"]);
+});
+ %}
+
+### Accounts
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processPreparation",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+> {%
+client.test("Extract accounts", () => {
+    client.assert(response.body["error"]["code"] === "0")
+
+    const cash =  response.body["accountInfos"].find(acc => acc["accountType"] === "CSH");
+    client.global.set("flatex_cash_bank_number", cash["number"]);
+    client.global.set("flatex_cash_bank_name", cash["bank"]["bankName"]);
+    client.global.set("flatex_cash_bank_bic", cash["bank"]["bic"]);
+    client.global.set("flatex_cash_bank_blz", cash["bank"]["blz"]);
+    client.global.set("flatex_cash_bank_country_code", cash["bank"]["countryCode"]);
+
+    const depot =  response.body["accountInfos"].find(acc => acc["accountType"] === "DEP");
+    client.global.set("flatex_depot_bank_number", depot["number"]);
+    client.global.set("flatex_depot_bank_name", depot["bank"]["bankName"]);
+    client.global.set("flatex_depot_bank_bic", depot["bank"]["bic"]);
+    client.global.set("flatex_depot_bank_blz", depot["bank"]["blz"]);
+    client.global.set("flatex_depot_bank_country_code", depot["bank"]["countryCode"]);
+});
+ %}
+
+### Securities
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processPortfolio",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    },
+    "depot": {
+      "number": "{{flatex_depot_bank_number}}",
+      "bank": {
+        "bankName": "{{flatex_depot_bank_name}}",
+        "bic": "{{flatex_depot_bank_bic}}",
+        "blz": "{{flatex_depot_bank_blz}}",
+        "countryCode": "{{flatex_depot_bank_country_code}}"
+      }
+    },
+    "synchron": true
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Orders
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processOrderList",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    },
+    "openOrdersOnly": true,
+    "archivedOrdersOnly": false,
+    "depot": {
+      "number": "{{flatex_depot_bank_number}}",
+      "bank": {
+        "bankName": "{{flatex_depot_bank_name}}",
+        "bic": "{{flatex_depot_bank_bic}}",
+        "blz": "{{flatex_depot_bank_blz}}",
+        "countryCode": "{{flatex_depot_bank_country_code}}"
+      }
+    },
+    "synchron": true
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Balance
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processBalance",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    },
+    "account": {
+      "number": "{{flatex_cash_bank_number}}",
+      "bank": {
+        "bankName": "{{flatex_cash_bank_name}}",
+        "bic": "{{flatex_cash_bank_bic}}",
+        "blz": "{{flatex_cash_bank_blz}}",
+        "countryCode": "{{flatex_cash_bank_country_code}}"
+      }
+    },
+    "synchron": true
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Request session code
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processSubmitCredential",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "authenticationMethod": "pTAN",
+      "customerId": "{{flatex_username}}"
+    },
+    "sessionCredential": true
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+> {%
+client.test("Store auth use case id", () => {
+    client.assert(response.body["error"]["code"] === "0")
+    client.global.set("flatex_auth_use_case_id", response.body["identificationUseCase"]["authUseCaseId"]);
+});
+%}
+
+### Submit session code
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processConfirmAuthUseCase",
+  "isPerformOrder": false,
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "authenticationMethod": "pTAN",
+      "customerId": "{{flatex_username}}",
+      "transactionPin": "{{flatex_transaction_pin}}"
+    },
+    "authUseCaseId": "{{flatex_auth_use_case_id}}"
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Ping
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processPing",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Order details
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processGetOrder",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    },
+    "depot": {
+      "number": "{{flatex_depot_bank_number}}",
+      "bank": {
+        "bankName": "{{flatex_depot_bank_name}}",
+        "bic": "{{flatex_depot_bank_bic}}",
+        "blz": "{{flatex_depot_bank_blz}}",
+        "countryCode": "{{flatex_depot_bank_country_code}}"
+      }
+    },
+    "orderId": "123456",
+    "detailLevel": 3
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Order cancellation
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processCancelOrder",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}",
+      "authenticationMethod": "pTAN",
+      "transactionPin": "{{flatex_transaction_pin}}",
+      "sessionCredential": true
+    },
+    "depot": {
+      "number": "{{flatex_depot_bank_number}}",
+      "bank": {
+        "bankName": "{{flatex_depot_bank_name}}",
+        "bic": "{{flatex_depot_bank_bic}}",
+        "blz": "{{flatex_depot_bank_blz}}",
+        "countryCode": "{{flatex_depot_bank_country_code}}"
+      }
+    },
+    "orderId": "123456"
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Search
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processSearchPaper",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "searchObj": {
+      "searchString": "US0378331005",
+      "searchIndicator": [
+        0
+      ],
+      "savingPlanOnly": false,
+      "kindList": [
+        "AKT",
+        "BEZ",
+        "ANL",
+        "OS",
+        "ZERT",
+        "FOND"
+      ]
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Place order (limit buy)
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processPlaceOrder",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}",
+      "authenticationMethod": "pTAN",
+      "transactionPin": "{{flatex_transaction_pin}}",
+      "sessionCredential": true
+    },
+    "order": {
+      "sell": false,
+      "paper": {
+        "isin": "US0378331005"
+      },
+      "value": {
+        "value": "1.0",
+        "currency": "XXX"
+      },
+      "stockExchange": "A71",
+      "validityKind": 1,
+      "limitPrice": {
+        "value": "0.1",
+        "currency": "EUR"
+      },
+      "limitExtension": -1,
+      "depot": {
+        "number": "{{flatex_depot_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_depot_bank_name}}",
+          "bic": "{{flatex_depot_bank_bic}}",
+          "blz": "{{flatex_depot_bank_blz}}",
+          "countryCode": "{{flatex_depot_bank_country_code}}"
+        }
+      },
+      "account": {
+        "number": "{{flatex_cash_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_cash_bank_name}}",
+          "bic": "{{flatex_cash_bank_bic}}",
+          "blz": "{{flatex_cash_bank_blz}}",
+          "countryCode": "{{flatex_cash_bank_country_code}}"
+        }
+      }
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Place order (sell)
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processPlaceOrder",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}",
+      "authenticationMethod": "pTAN",
+      "transactionPin": "{{flatex_transaction_pin}}",
+      "sessionCredential": true
+    },
+    "order": {
+      "sell": true,
+      "paper": {
+        "isin": "US0378331005"
+      },
+      "value": {
+        "value": "1.0",
+        "currency": "XXX"
+      },
+      "stockExchange": "A71",
+      "validityKind": 1,
+      "limitExtension": -1,
+      "depot": {
+        "number": "{{flatex_depot_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_depot_bank_name}}",
+          "bic": "{{flatex_depot_bank_bic}}",
+          "blz": "{{flatex_depot_bank_blz}}",
+          "countryCode": "{{flatex_depot_bank_country_code}}"
+        }
+      },
+      "account": {
+        "number": "{{flatex_cash_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_cash_bank_name}}",
+          "bic": "{{flatex_cash_bank_bic}}",
+          "blz": "{{flatex_cash_bank_blz}}",
+          "countryCode": "{{flatex_cash_bank_country_code}}"
+        }
+      }
+    }
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+### Kostenausweis
+POST https://flatex.guidants-trading.de/proxy
+Content-Type: application/json
+
+{
+  "action": "processGetExAnteCostData",
+  "args": {
+    "session": {
+      "sessionId": "{{flatex_session_id}}"
+    },
+    "identification": {
+      "customerId": "{{flatex_username}}"
+    },
+    "order": {
+      "sell": false,
+      "paper": {
+        "isin": "US0378331005"
+      },
+      "value": {
+        "value": "1",
+        "currency": "XXX"
+      },
+      "stockExchange": "A30",
+      "validityKind": 3,
+      "validity": "20220626",
+      "limitExtension": 2,
+      "depot": {
+        "number": "{{flatex_depot_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_depot_bank_name}}",
+          "bic": "{{flatex_depot_bank_bic}}",
+          "blz": "{{flatex_depot_bank_blz}}",
+          "countryCode": "{{flatex_depot_bank_country_code}}"
+        }
+      },
+      "account": {
+        "number": "{{flatex_cash_bank_number}}",
+        "bank": {
+          "bankName": "{{flatex_cash_bank_name}}",
+          "bic": "{{flatex_cash_bank_bic}}",
+          "blz": "{{flatex_cash_bank_blz}}",
+          "countryCode": "{{flatex_cash_bank_country_code}}"
+        }
+      }
+    },
+    "savingPlan": false
+  },
+  "provider": "flatex_at",
+  "platform": "android"
+}
+
+###

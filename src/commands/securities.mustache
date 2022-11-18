@@ -1,0 +1,20 @@
+<p>
+{{#securities}}
+    {{#symbol}}
+        <code>{{symbol}}</code>
+        &nbsp;&middot;&nbsp;
+    {{/symbol}}
+    <code><a href="{{onvistaUrl}}">{{paper.sin}}</a></code>
+    &middot;
+    &times;{{quantity.value}}
+    &middot;
+    {{initialValue}}
+    &middot;
+    <font color="{{#isRed}}#cc4412{{/isRed}}{{#isGreen}}#158c35{{/isGreen}}">{{changeValue}}</font>
+    &#47;
+    <font color="{{#isRed}}#cc4412{{/isRed}}{{#isGreen}}#158c35{{/isGreen}}">{{#isGreen}}+{{/isGreen}}{{changePercentage}}</font>
+    &middot;
+    {{paper.name}}
+    <br>
+{{/securities}}
+</p>

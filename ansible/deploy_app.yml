@@ -1,0 +1,44 @@
+---
+- hosts: app
+  any_errors_fatal: true
+  tasks:
+    - name: Copy application
+      synchronize:
+        src: "{{ item }}"
+        dest: "/data/flatex-bot"
+        owner: no
+        group: no
+      with_items:
+        - ../src
+        - ../.eslintignore
+        - ../.eslintrc
+        - ../package.json
+        - ../package-lock.json
+        - ../tsconfig.json
+      become_user: flatex-bot
+
+    - name: Install dependencies
+      npm:
+        ci: yes
+        path: "/data/flatex-bot"
+      become_user: flatex-bot
+
+    - name: Build application
+      shell: npm run build
+      become_user: flatex-bot
+      args:
+        chdir: "/data/flatex-bot"
+
+    - name: Install service
+      template:
+        src: "app-unit.j2"
+        dest: "/etc/systemd/system/flatex-bot.service"
+      become: yes
+
+    - name: Start service
+      systemd:
+        name: "flatex-bot"
+        enabled: yes
+        state: restarted
+        daemon_reload: yes
+      become: yes
